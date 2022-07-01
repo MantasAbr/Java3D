@@ -5,7 +5,6 @@ import main.shapes.Polygons;
 import main.shapes.Tetrahedron;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
@@ -19,6 +18,7 @@ public class Display extends JFrame implements Runnable{
     public static final int IMAGE_WIDTH = 800;
     public static final int IMAGE_HEIGHT = 450;
     private volatile boolean isRunning = false;
+    private final double frameRateCap = 60.0;
 
     private BufferedImage image;
 
@@ -66,47 +66,54 @@ public class Display extends JFrame implements Runnable{
     @Override
     public void run() {
         long lastTime = System.nanoTime();
-        double NanosPerTick = 1000000000D / 60D;
-        int ticks = 0;
-        int frames = 0;
-        long lastTimer = System.currentTimeMillis();
+        double amountOfTicks = 60.0;
+        double NanosPerTick = 1000000000D / (int) amountOfTicks;
         double delta = 0;
+        long timer = System.currentTimeMillis();
+        int frames = 0;
+        int ticks = 0;
+
+        long renderLastTime = System.nanoTime();;
+        double renderNs = 1000000000 / frameRateCap;
+        double renderDelta = 0;
 
         while(isRunning){
             long now = System.nanoTime();
             delta += (now - lastTime) / NanosPerTick;
             lastTime = now;
-            boolean shouldRender = true; //if false, frame rate locks to the tick count, if not - vice versa
 
             while(delta >= 1){
                 ticks++;
                 update();
                 delta -= 1;
-                shouldRender = true;
             }
 
-            try {
-                //can increase the sleep rate to lower the fps and processing power
-                Thread.sleep(7);
-            } catch (InterruptedException ex) {
-                ex.printStackTrace();
-            }
-
-            if(shouldRender){
-                frames++;
+            now = System.nanoTime();
+            renderDelta += (now - renderLastTime) / renderNs;
+            renderLastTime = now;
+            while(isRunning && renderDelta >= 1) {
                 render();
+                frames++;
+                renderDelta--;
             }
 
-            if(System.currentTimeMillis() - lastTimer >= 1000){
-                lastTimer += 1000;
+            if(System.currentTimeMillis() - timer >= 1000){
+                timer += 1000;
                 finalTicks = ticks;
                 finalFrames = frames;
-                System.out.println(ticks + " ticks, " + frames + " frames per second");
                 frames = 0;
                 ticks = 0;
             }
         }
     }
+
+    public void debugInfo(Graphics g) {
+        Font font = new Font("Courier new", Font.BOLD, 16);
+        g.setColor(Color.WHITE);
+        g.setFont(font);
+        g.drawString(finalTicks + " ticks, " + finalFrames + " frames per second", 10, 50);
+    }
+
 
     private void render() {
         BufferStrategy bs = getBufferStrategy();
@@ -119,12 +126,13 @@ public class Display extends JFrame implements Runnable{
         image.getScaledInstance(WINDOW_WIDTH, WINDOW_HEIGHT, Image.SCALE_SMOOTH);
         g.setColor(Color.black);
         g.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+        debugInfo(g);
+
 
         tetra.render(g);
 
         g.dispose();
         bs.show();
-
     }
 
     private void init(){
