@@ -32,7 +32,7 @@ public class Tetrahedron {
         this.sortPolygons();
     }
 
-    private void sortPolygons() {
+    public void sortPolygons() {
         Polygons.sortPolygons(this.polygons);
     }
 

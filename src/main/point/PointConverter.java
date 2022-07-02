@@ -11,6 +11,15 @@ public class PointConverter {
     /*  X  =  0  */
 
     private static double scale = 1;
+    private final static double zoom = 1.2;
+
+    public static void zoomIn(){
+        scale += zoom;
+    }
+
+    public static void zoomOut(){
+        scale /= zoom;
+    }
 
     public static Point convertToTwoDimension(PointThree point3D) {
         double x3d = point3D.y * scale;

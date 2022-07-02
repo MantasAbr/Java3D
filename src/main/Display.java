@@ -1,8 +1,12 @@
 package main;
 
+import main.input.ClickType;
+import main.point.PointConverter;
 import main.point.PointThree;
 import main.shapes.Polygons;
 import main.shapes.Tetrahedron;
+import main.input.Mouse;
+import sun.security.x509.CRLDistributionPointsExtension;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,8 +19,8 @@ public class Display extends JFrame implements Runnable{
     private static String title = ":)";
     public static final int WINDOW_WIDTH = Toolkit.getDefaultToolkit().getScreenSize().width;
     public static final int WINDOW_HEIGHT = Toolkit.getDefaultToolkit().getScreenSize().height;
-    public static final int IMAGE_WIDTH = 800;
-    public static final int IMAGE_HEIGHT = 450;
+    public static final int IMAGE_WIDTH = 464;
+    public static final int IMAGE_HEIGHT = 261;
     private volatile boolean isRunning = false;
     private final double frameRateCap = 60.0;
 
@@ -27,11 +31,13 @@ public class Display extends JFrame implements Runnable{
     private int finalFrames = 0;
 
     private Tetrahedron tetra;
+    private Mouse mouse;
 
     public Display() {
         thread = new Thread(this);
         image = new BufferedImage(IMAGE_WIDTH, IMAGE_HEIGHT, BufferedImage.TYPE_INT_ARGB);
         JFrameInit();
+        MouseInit();
         init();
         start();
     }
@@ -47,6 +53,13 @@ public class Display extends JFrame implements Runnable{
         setVisible(true);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         //setUndecorated(true);
+    }
+
+    public void MouseInit() {
+        this.mouse = new Mouse();
+        this.addMouseListener(this.mouse);
+        this.addMouseMotionListener(this.mouse);
+        this.addMouseWheelListener(this.mouse);
     }
 
     public static void main(String[] args) {
@@ -112,6 +125,7 @@ public class Display extends JFrame implements Runnable{
         g.setColor(Color.WHITE);
         g.setFont(font);
         g.drawString(finalTicks + " ticks, " + finalFrames + " frames per second", 10, 50);
+        g.drawString("button pressed: " + mouse.getMouseB() + ", scroll value: " + mouse.getScroll(), 10, 70);
     }
 
 
@@ -123,6 +137,7 @@ public class Display extends JFrame implements Runnable{
         }
 
         Graphics g = bs.getDrawGraphics();
+
         image.getScaledInstance(WINDOW_WIDTH, WINDOW_HEIGHT, Image.SCALE_SMOOTH);
         g.setColor(Color.black);
         g.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -153,10 +168,28 @@ public class Display extends JFrame implements Runnable{
                     new Polygons(Color.GREEN, p2, p6, p7, p3),
                     new Polygons(Color.MAGENTA, p4, p3, p7, p8)
                 );
-        this.tetra.rotate(true, 0, 0, 0);
     }
 
     private void update(){
-        this.tetra.rotate(true, 1, 1, 1);
+        int x = this.mouse.getMouseX();
+        int y = this.mouse.getMouseY();
+        if(this.mouse.getMouseB() == ClickType.LEFT_CLICK) {
+
+            int xDiff = x - this.mouse.getInitialX();
+            int yDiff = y - this.mouse.getInitialY();
+
+            this.tetra.rotate(true, 0, -yDiff, -xDiff);
+        }
+
+        if(this.mouse.getScroll() == -1)
+            PointConverter.zoomIn();
+        else if (this.mouse.getScroll() == 1)
+            PointConverter.zoomOut();
+        this.mouse.resetScroll();
+
+        this.mouse.setInitialX(x);
+        this.mouse.setInitialY(y);
+
+        this.tetra.sortPolygons();
     }
 }

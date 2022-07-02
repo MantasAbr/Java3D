@@ -3,6 +3,7 @@ package main.shapes;
 import main.point.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 
@@ -36,6 +37,7 @@ public class Polygons {
         for(PointThree p : polygonPoints) {
             PointConverter.rotateAxisX(p, clockWise, xDegrees);
             PointConverter.rotateAxisY(p, clockWise, yDegrees);
+            PointConverter.rotateAxisZ(p, clockWise, zDegrees);
         }
     }
 
@@ -49,11 +51,8 @@ public class Polygons {
     }
 
     public static Polygons[] sortPolygons(Polygons[] polygons) {
-        ArrayList<Polygons> polygonsList = new ArrayList<Polygons>();
 
-        for(Polygons poly : polygons) {
-            polygonsList.add(poly);
-        }
+        ArrayList<Polygons> polygonsList = new ArrayList<Polygons>(Arrays.asList(polygons));
 
         Collections.sort(polygonsList, new Comparator<Polygons>() {
             @Override
@@ -72,13 +71,6 @@ public class Polygons {
     public void setColor(Color color){
         polygonColor = color;
     }
-
-    public static Polygons cube = new Polygons(
-            Color.RED,
-            new PointThree(0, 100, 0),
-            new PointThree(100, 0, 0),
-            new PointThree(0, 0, 100)
-    );
 }
 
 
